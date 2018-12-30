@@ -1,5 +1,6 @@
-clear all; close all;clc;
-img = imread('dataset/shape2.jpeg');
+% clear all; close all;clc;
+% img = imread('dataset/landscape-b.jpg');
+function [feature_vec, validpoints] = siftfeature(img)
 %% Initialize phase
 row = zeros(4,1) ;
 col = zeros(4,1);
@@ -144,7 +145,7 @@ for ll=1:size(coord,1)
     Taylor_dog = D(coord(ll, 3), coord(ll, 4)) + ((D_dif')*loc_ext)/2;
     
     if (abs(Taylor_dog) > threshold_1) && (max(abs(loc_ext)) <= 0.5)
-        coord2 = [coord2; coord(ll,:) (coord(ll,3)+loc_ext(1)) (coord(ll,4)+loc_ext(2)) (coord(ll,5)+loc_ext(3)) Taylor_dog];               
+        coord2 = [coord2; coord(ll,:) (coord(ll,3)+loc_ext(1)) (coord(ll,4)+loc_ext(2)) (coord(ll,5)+loc_ext(3)) Taylor_dog];
     end
     
 end
@@ -217,23 +218,24 @@ end
 coord_final2 = [];
 for oo=1:size(coord_final,1)
     hist_bin = zeros(1, 36);
-    sigma_dog = coord_final(oo, 8);   
+    sigma_dog = coord_final(oo, 8);
     %Find closest scale
-%     minSigma = 2000;
-%     for ii = 1:size(scale_space, 2)
-%         for jj = 1:size(scale_space, 1)
-%             if(abs(sigma_arr(jj, ii) -sigma_dog)< minSigma)
-%                 minSigma = abs(sigma_arr(jj, ii) - sigma_dog);
-%                 idx = jj;
-%                 idy = ii;
-%             end
-%         end
-%     end
+    %     minSigma = 2000;
+    %     for ii = 1:size(scale_space, 2)
+    %         for jj = 1:size(scale_space, 1)
+    %             if(abs(sigma_arr(jj, ii) -sigma_dog)< minSigma)
+    %                 minSigma = abs(sigma_arr(jj, ii) - sigma_dog);
+    %                 idx = jj;
+    %                 idy = ii;
+    %             end
+    %         end
+    %     end
     idx = coord_final(oo, 1);
     idy = coord_final(oo, 2);
     mag_I = mag_space{idx, idy};
     theta_I = theta_space{idx, idy};
-    winsize = 9;
+    %Window size ~ 1.5*sigma
+    winsize = 15;
     gauss_filter = fspecial('gaussian', [winsize winsize], 1.5*coord_final(oo,8));
     
     theta_win = theta_I(coord_final(oo,3)-(winsize-1)/2+offset:coord_final(oo,3)+(winsize-1)/2+offset,...
@@ -248,9 +250,11 @@ for oo=1:size(coord_final,1)
             if theta == 0
                 theta = theta + 1;
             end
+            %NOTE: Parabola fit for accuracy increase, interpolation of
+            %closest values to the peak
             hist_bin(1, ceil(theta/10)) = hist_bin(1, ceil(theta/10)) + m;
         end
-
+        
     end
     [maxEl, maxElIndx] = max(hist_bin);
     coord_final2 = [coord_final2; coord_final(oo,:) idx idy maxEl maxElIndx];
@@ -282,24 +286,25 @@ for oo = 1:size(coord_final2,1)
     mag_newwin = mag_newwin .* newgauss_filt;
     
     count = 0;
-    %For each window
-    for i = 0:3
-        for j = 0:3
-            theta_f = theta_newwin((i*w)+1:(i+1)*w, (j*w)+1:(j+1)*w);
-            mag_f = mag_newwin((i*w)+1:(i+1)*w, (j*w)+1:(j+1)*w);
-
+    %For each window, jump 4 by 4
+    for i = 1:w:16
+        for j = 1:w:16
+            theta_f = theta_newwin(i:(i+3), j:(j+3));
+            mag_f = mag_newwin(i:(i+3), j:(j+3));
+            
             %For each element in window
             for k = 1:4
                 for l = 1:4
                     if theta_f(k,l) == 0
-                        theta_f(k,l) = theta_f(k,l) + 1;
+                        theta_f(k,l) = theta_f(k,l) + 10;
                     end
                     %Rotation dependence
-                    %theta_f(k,l) = theta_f(k,l) - ((coord_final2(oo,13)*10)-5);
-                    %theta_f(k,l) = mod(theta_f(k,l),360);
+                    theta_f(k,l) = theta_f(k,l) + ((coord_final2(oo,13)*10)-5);
+                    theta_f(k,l) = mod(theta_f(k,l),360);
                     
+                    %Trilinear multiplication
                     feature_vec(oo, count+ceil(theta_f(k,l)/45)) = feature_vec(oo, count+ceil(theta_f(k,l)/45))...
-                        + mag_f(k,l);
+                        + (mag_f(k,l));
                     
                 end
             end
@@ -307,10 +312,10 @@ for oo = 1:size(coord_final2,1)
         end
     end
     
-  
+    
     norm = sqrt(sum(feature_vec(oo,:).^2));
     feature_vec(oo,:) = feature_vec(oo,:)./norm;
-       
+    
     %Threshold values above 0.2 -> Illumination Independence
     feature_vec(oo, feature_vec(oo,:)>0.2)=0.2;
     
@@ -323,6 +328,6 @@ for oo = 1:size(coord_final2,1)
     
 end
 
-save('feature2.mat','feature_vec');
-save('validpoints2.mat','validpoints');
-
+% save('feature2.mat','feature_vec');
+% save('validpoints2.mat','validpoints');
+end
