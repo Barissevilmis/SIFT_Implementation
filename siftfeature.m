@@ -207,7 +207,7 @@ for ii = 1:size(scale_space,2)
                     + ((I(xx,yy+1)-I(xx,yy-1))^2));
                 theta_space{jj, ii}(xx,yy) = atan2d((I(xx,yy+1)-I(xx,yy-1))...
                     , (I(xx+1,yy)-I(xx-1,yy)));
-                theta_space{jj, ii}(xx,yy) = theta_space{jj, ii}(xx,yy) + 180;
+                theta_space{jj, ii}(xx,yy) = mod(theta_space{jj, ii}(xx,yy) + 360,360);
             end
         end
         mag_space{jj, ii} = padarray(mag_space{jj, ii}, [offset offset],'both');
@@ -219,36 +219,28 @@ coord_final2 = [];
 for oo=1:size(coord_final,1)
     hist_bin = zeros(1, 36);
     sigma_dog = coord_final(oo, 8);
-    %Find closest scale
-    %     minSigma = 2000;
-    %     for ii = 1:size(scale_space, 2)
-    %         for jj = 1:size(scale_space, 1)
-    %             if(abs(sigma_arr(jj, ii) -sigma_dog)< minSigma)
-    %                 minSigma = abs(sigma_arr(jj, ii) - sigma_dog);
-    %                 idx = jj;
-    %                 idy = ii;
-    %             end
-    %         end
-    %     end
+    
     idx = coord_final(oo, 1);
     idy = coord_final(oo, 2);
     mag_I = mag_space{idx, idy};
     theta_I = theta_space{idx, idy};
     %Window size ~ 1.5*sigma
-    winsize = 15;
+    winsize = 9;
     gauss_filter = fspecial('gaussian', [winsize winsize], 1.5*coord_final(oo,8));
+    currx = coord_final(oo,3) ;%* (2^(coord_final(oo, 2) -idy)); 
+    curry = coord_final(oo,4) ;%* (2^(coord_final(oo, 2) -idy));
     
-    theta_win = theta_I(coord_final(oo,3)-(winsize-1)/2+offset:coord_final(oo,3)+(winsize-1)/2+offset,...
-        coord_final(oo,4)-(winsize-1)/2+offset:coord_final(oo,4)+(winsize-1)/2+offset);
-    mag_win = mag_I(coord_final(oo,3)-(winsize-1)/2+offset:coord_final(oo,3)+(winsize-1)/2+offset,...
-        coord_final(oo,4)-(winsize-1)/2+offset:coord_final(oo,4)+(winsize-1)/2+offset);
+    theta_win = theta_I(currx-(winsize-1)/2+offset:currx+(winsize-1)/2+offset,...
+        curry-(winsize-1)/2+offset:curry+(winsize-1)/2+offset);
+    mag_win = mag_I(currx-(winsize-1)/2+offset:currx+(winsize-1)/2+offset,...
+        curry-(winsize-1)/2+offset:curry+(winsize-1)/2+offset);
     mag_win = mag_win .* gauss_filter;
     for ii = 1:size(theta_win,1)
         for jj = 1:size(theta_win,2)
             theta = theta_win(ii,jj);
             m = mag_win(ii,jj);
             if theta == 0
-                theta = theta + 1;
+                theta = theta + 10;
             end
             %NOTE: Parabola fit for accuracy increase, interpolation of
             %closest values to the peak
@@ -275,35 +267,43 @@ for oo = 1:size(coord_final2,1)
     theta_I = theta_space{coord_final2(oo, 10), coord_final2(oo, 11)};
     mag_I = mag_space{coord_final2(oo, 10), coord_final2(oo, 11)};
     
-    subpixel_idx = floor(coord_final2(oo, 6));
-    subpixel_idy = floor(coord_final2(oo, 7));
+    subpixel_idx = round(coord_final2(oo, 6));
+    subpixel_idy = round(coord_final2(oo, 7));
     newgauss_filt = fspecial('gaussian',[16,16],8);
+    theta = ((coord_final2(oo,13))*10)-5;
     
+    %New approach
+%     count = 1;
+%     for ii = -7:8
+%         for jj =-7:8
+%             magF = mag_I(subpixel_idx+ii+offset, subpixel_idy+jj+offset) * newgauss_filt(ii+8,jj+8);
+%             thetaF = mod(theta_I(subpixel_idx+ii+offset, subpixel_idy+jj+offset)-theta+(180/8)+360,360);
+%             feature_vec(oo, count + floor(thetaF/45)) = feature_vec(oo,count + floor(thetaF/45)) +magF ;
+%         end
+%         count = count + 8;
+%     end
+    %Current approach
     theta_newwin = theta_I(subpixel_idx-7+offset:subpixel_idx+8+offset,...
         subpixel_idy-7+offset:subpixel_idy+8+offset);
     mag_newwin = mag_I(subpixel_idx-7+offset:subpixel_idx+8+offset,...
         subpixel_idy-7+offset:subpixel_idy+8+offset);
     mag_newwin = mag_newwin .* newgauss_filt;
     
-    count = 0;
+    count = 1;
     %For each window, jump 4 by 4
     for i = 1:w:16
         for j = 1:w:16
             theta_f = theta_newwin(i:(i+3), j:(j+3));
             mag_f = mag_newwin(i:(i+3), j:(j+3));
-            
             %For each element in window
             for k = 1:4
-                for l = 1:4
-                    if theta_f(k,l) == 0
-                        theta_f(k,l) = theta_f(k,l) + 10;
-                    end
-                    %Rotation dependence
-                    theta_f(k,l) = theta_f(k,l) + ((coord_final2(oo,13)*10)-5);
-                    theta_f(k,l) = mod(theta_f(k,l),360);
+                for l = 1:4                   
                     
-                    %Trilinear multiplication
-                    feature_vec(oo, count+ceil(theta_f(k,l)/45)) = feature_vec(oo, count+ceil(theta_f(k,l)/45))...
+                    %Rotation dependence
+                    theta_bin = theta_f(k,l) - theta + (180/8) + 360;
+                    theta_bin = mod(theta_bin,360);
+
+                    feature_vec(oo, count+floor(theta_bin/45)) = feature_vec(oo, count+floor(theta_bin/45))...
                         + (mag_f(k,l));
                     
                 end

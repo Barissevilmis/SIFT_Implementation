@@ -1,5 +1,5 @@
-I = imread('dataset/landscape-a.jpg');
-I_comp = imread('dataset/landscape-b.jpg');
+I = imread('dataset/roofs1.jpg');
+I_comp = imread('dataset/roofs2.jpg');
 
 
 % feature1 = load('feature1.mat');
@@ -10,12 +10,12 @@ I_comp = imread('dataset/landscape-b.jpg');
 [features1, vpts1] = siftfeature(I);
 [features2, vpts2] = siftfeature(I_comp);
 
-feature2 = load('feature2.mat');
-features2 = feature2.feature_vec;
-validpoints2 = load('validpoints2.mat');
-vpts2 = validpoints2.validpoints;
+% feature2 = load('feature2.mat');
+% features2 = feature2.feature_vec;
+% validpoints2 = load('validpoints2.mat');
+% vpts2 = validpoints2.validpoints;
 
-[indexPairs,matchmetric] = matchFeatures(features1,features2,'Unique',true);
+[indexPairs,matchmetric] = matchFeatures(features1,features2,'Unique',true );%,'MaxRatio',0.4);
 
 matchedLoc1 = vpts1(indexPairs(:,1),:);
 matchedLoc2 = vpts2(indexPairs(:,2),:);
