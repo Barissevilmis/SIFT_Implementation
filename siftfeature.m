@@ -300,7 +300,7 @@ for oo = 1:size(coord_final2,1)
                 for l = 1:4                   
                     
                     %Rotation dependence
-                    theta_bin = theta_f(k,l) - theta + (180/8) + 360;
+                    theta_bin = theta_f(k,l) - theta + 360;
                     theta_bin = mod(theta_bin,360);
 
                     feature_vec(oo, count+floor(theta_bin/45)) = feature_vec(oo, count+floor(theta_bin/45))...
