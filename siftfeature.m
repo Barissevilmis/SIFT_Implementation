@@ -35,7 +35,7 @@ for ii=1:size(scale_space,2)
     end
     new_img = imresize(new_img, 0.5, 'bilinear');
 end
-
+%figure(1);title(scale_space);
 %% Create DoG space(Difference of Gaussians)
 for kk=1:size(dog_space,2)
     for mm=1:size(dog_space,1)
@@ -277,9 +277,9 @@ for oo = 1:size(coord_final2,1)
     subpixel_idx = floor(coord_final2(oo, 6));
     subpixel_idy = floor(coord_final2(oo, 7));
     G1 = fspecial('gaussian', [16 16], 8);
-    theta = (coord_final2(oo,13));
+    theta = coord_final2(oo,13);
     
-    %New approach
+%     %New approach
 %     coor = [subpixel_idx+offset; subpixel_idy+offset];
 %     size_mag = [size(mag_I,1)/2; size(mag_I,2)/2];
 %     
@@ -327,15 +327,15 @@ for oo = 1:size(coord_final2,1)
         subpixel_idy-7+offset:subpixel_idy+8+offset);
     mag_newwin = mag_newwin .* G1;
     
-%     rotMag = imrotate(theta_newwin, theta,'crop');
-%     rotTheta = imrotate(mag_newwin, theta,'crop');
-    
+    theta_newwin = imrotate(theta_newwin,360-theta,'crop');
+    mag_newwin = imrotate(mag_newwin, 360-theta ,'crop');
     count = 1;
     %For each window, jump 4 by 4
     for i = 1:w:16
         for j = 1:w:16
             theta_f = theta_newwin(i:(i+3), j:(j+3));
             mag_f = mag_newwin(i:(i+3), j:(j+3));
+            
             %For each element in window
             for k = 1:4
                 for l = 1:4                                    
@@ -344,9 +344,9 @@ for oo = 1:size(coord_final2,1)
                     theta_bin = mod(theta_bin,360);
                     
                     %Trilinear interpolation
-                    trilin = 1 - ((((floor(theta_bin/45)*45)-22.5)-theta_bin)/pi);
+                    %trilin = 1 - ((((floor(theta_bin/45)*45)-22.5)-theta_bin)/pi);
                     feature_vec(oo, count+floor(theta_bin/45)) = feature_vec(oo, count+floor(theta_bin/45))...
-                        + (mag_f(k,l)*trilin^2);
+                        + mag_f(k,l);
                     
                 end
             end
