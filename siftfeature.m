@@ -224,7 +224,6 @@ for oo=1:size(coord_final,1)
     %Window size ~ 1.5*sigma
     winsize = 2*ceil(1.5*coord_final(oo,8));
     if mod(winsize,2) == 0
-        disp(winsize);
         winsize = winsize + 1;
     end
     gauss_filter = fspecial('gaussian', [winsize winsize], 1.5*coord_final(oo,8));
@@ -275,81 +274,85 @@ for oo = 1:size(coord_final2,1)
     theta_I = theta_space{coord_final2(oo, 10), coord_final2(oo, 11)};
     mag_I = mag_space{coord_final2(oo, 10), coord_final2(oo, 11)};
     
-    subpixel_idx = round(coord_final2(oo, 6));
-    subpixel_idy = round(coord_final2(oo, 7));
+    subpixel_idx = floor(coord_final2(oo, 6));
+    subpixel_idy = floor(coord_final2(oo, 7));
     G1 = fspecial('gaussian', [16 16], 8);
     theta = (coord_final2(oo,13));
     
     %New approach
-    coor = [subpixel_idx+offset; subpixel_idy+offset];
-    size_mag = [size(mag_I,1)/2; size(mag_I,2)/2];
-    
-    theta = 360 - theta;
-    rotMag = imrotate(mag_I, theta);
-    rotTheta = imrotate(theta_I, theta);
-    
-    rotMat = [cosd(theta) -sind(theta); sind(theta) cosd(theta)];
-    temp_coor = rotMat*(coor - size_mag);
-    rot_coor = temp_coor + size_mag;
-    
-    difMat = [(size(rotMag,1) - size(mag_I,1))/2; (size(rotMag,2) - size(mag_I,2))/2];
-    rot_coor_final = rot_coor + difMat;
-    rot_row = round(rot_coor_final(1));
-    rot_col = round(rot_coor_final(2));
-    
-    temp_vec = zeros(4,4,8);
-    %Create window
-    for i = 1:1:16
-        for j = 1:1:16      
-            rowTrue = round(rot_row + j - 9);
-            colTrue = round(rot_col + i - 9);
-            
-            %Check if points between boundaries
-            if rowTrue > 0 && colTrue > 0 && rowTrue <= size(rotMag, 1) && colTrue <= size(rotMag, 2)
-                mag = rotMag(rowTrue, colTrue)* G1(j,i);
-                ori = mod(rotTheta(rowTrue, colTrue) + 360, 360);
-                temp_vec(ceil(i/4),ceil(j/4),floor(ori/45)+1) = temp_vec(ceil(i/4),ceil(j/4),floor(ori/45)+1) + mag;
-            end
-        end
-    end
-    
-    count = 1;
-    for i = 1:1:4
-        for j = 1:1:4
-            feature_vec(oo,count:count+7) = temp_vec(i,j,:);
-            count = count + 8;
-        end
-    end
-    
-    %Current approach
-%     theta_newwin = theta_I(subpixel_idx-7+offset:subpixel_idx+8+offset,...
-%         subpixel_idy-7+offset:subpixel_idy+8+offset);
-%     mag_newwin = mag_I(subpixel_idx-7+offset:subpixel_idx+8+offset,...
-%         subpixel_idy-7+offset:subpixel_idy+8+offset);
-%     mag_newwin = mag_newwin .* G1;
+%     coor = [subpixel_idx+offset; subpixel_idy+offset];
+%     size_mag = [size(mag_I,1)/2; size(mag_I,2)/2];
+%     
+%     theta = 360 - theta;
+%     rotMag = imrotate(mag_I, theta);
+%     rotTheta = imrotate(theta_I, theta);
+%     
+%     rotMat = [cosd(theta) -sind(theta); sind(theta) cosd(theta)];
+%     temp_coor = rotMat*(coor - size_mag);
+%     rot_coor = temp_coor + size_mag;
+%     
+%     difMat = [(size(rotMag,1) - size(mag_I,1))/2; (size(rotMag,2) - size(mag_I,2))/2];
+%     rot_coor_final = rot_coor + difMat;
+%     rot_row = round(rot_coor_final(1));
+%     rot_col = round(rot_coor_final(2));
+%     
+%     temp_vec = zeros(4,4,8);
+%     %Create window
+%     for i = 1:1:16
+%         for j = 1:1:16      
+%             rowTrue = round(rot_row + j - 9);
+%             colTrue = round(rot_col + i - 9);
+%             
+%             %Check if points between boundaries
+%             if rowTrue > 0 && colTrue > 0 && rowTrue <= size(rotMag, 1) && colTrue <= size(rotMag, 2)
+%                 mag = rotMag(rowTrue, colTrue)* G1(j,i);
+%                 ori = mod(rotTheta(rowTrue, colTrue) + 360, 360);
+%                 temp_vec(ceil(i/4),ceil(j/4),floor(ori/45)+1) = temp_vec(ceil(i/4),ceil(j/4),floor(ori/45)+1) + mag;
+%             end
+%         end
+%     end
 %     
 %     count = 1;
-%     %For each window, jump 4 by 4
-%     for i = 1:w:16
-%         for j = 1:w:16
-%             theta_f = theta_newwin(i:(i+3), j:(j+3));
-%             mag_f = mag_newwin(i:(i+3), j:(j+3));
-%             %For each element in window
-%             for k = 1:4
-%                 for l = 1:4                   
-%                     
-%                     %Rotation dependence
-%                     theta_bin = theta_f(k,l) - theta + (180/8) + 360;
-%                     theta_bin = mod(theta_bin,360);
-% 
-%                     feature_vec(oo, count+floor(theta_bin/45)) = feature_vec(oo, count+floor(theta_bin/45))...
-%                         + (mag_f(k,l));
-%                     
-%                 end
-%             end
+%     for i = 1:1:4
+%         for j = 1:1:4
+%             feature_vec(oo,count:count+7) = temp_vec(i,j,:);
 %             count = count + 8;
 %         end
 %     end
+    
+    %Current approach
+    theta_newwin = theta_I(subpixel_idx-7+offset:subpixel_idx+8+offset,...
+        subpixel_idy-7+offset:subpixel_idy+8+offset);
+    mag_newwin = mag_I(subpixel_idx-7+offset:subpixel_idx+8+offset,...
+        subpixel_idy-7+offset:subpixel_idy+8+offset);
+    mag_newwin = mag_newwin .* G1;
+    
+%     rotMag = imrotate(theta_newwin, theta,'crop');
+%     rotTheta = imrotate(mag_newwin, theta,'crop');
+    
+    count = 1;
+    %For each window, jump 4 by 4
+    for i = 1:w:16
+        for j = 1:w:16
+            theta_f = theta_newwin(i:(i+3), j:(j+3));
+            mag_f = mag_newwin(i:(i+3), j:(j+3));
+            %For each element in window
+            for k = 1:4
+                for l = 1:4                                    
+                    %Rotation dependence
+                    theta_bin = theta_f(k,l) - theta + (180/8) + 360;
+                    theta_bin = mod(theta_bin,360);
+                    
+                    %Trilinear interpolation
+                    trilin = 1 - ((((floor(theta_bin/45)*45)-22.5)-theta_bin)/pi);
+                    feature_vec(oo, count+floor(theta_bin/45)) = feature_vec(oo, count+floor(theta_bin/45))...
+                        + (mag_f(k,l)*trilin^2);
+                    
+                end
+            end
+            count = count + 8;
+        end
+    end
     
     
     norm = sqrt(sum(feature_vec(oo,:).^2));

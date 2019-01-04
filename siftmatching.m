@@ -14,7 +14,7 @@ I_comp = imread('dataset/roofs2.jpg');
 % validpoints2 = load('validpoints2.mat');
 % vpts2 = validpoints2.validpoints;
 
-[indexPairs,matchmetric] = matchFeatures(features1,features2,'Unique',true);%,'MaxRatio',0.8);
+[indexPairs,matchmetric] = matchFeatures(features1,features2,'Unique',true);%,'MaxRatio',0.2);
 
 matchedLoc1 = vpts1(indexPairs(:,1),:);
 matchedLoc2 = vpts2(indexPairs(:,2),:);
