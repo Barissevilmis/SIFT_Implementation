@@ -193,7 +193,7 @@ plot(coord_final(:,4),coord_final(:,3) , 'mo');
 %% Magnitude and Theta Space
 mag_space = cell(5,4);
 theta_space = cell(5,4);
-offset = 50;
+offset = 20;
 for ii = 1:size(scale_space,2)
     for jj=1:size(scale_space,1)
         mag_space{jj, ii} = zeros(size(scale_space{jj,ii},1),size(scale_space{jj,ii},2));
@@ -222,11 +222,7 @@ for oo=1:size(coord_final,1)
     mag_I = mag_space{idx, idy};
     theta_I = theta_space{idx, idy};
     %Window size ~ 1.5*sigma
-    winsize = 2*ceil(1.5*coord_final(oo,8));
-    if mod(winsize,2) == 0
-        disp(winsize);
-        winsize = winsize + 1;
-    end
+    winsize = 9;
     gauss_filter = fspecial('gaussian', [winsize winsize], 1.5*coord_final(oo,8));
     currx = coord_final(oo,3) ;%* (2^(coord_final(oo, 2) -idy)); 
     curry = coord_final(oo,4) ;%* (2^(coord_final(oo, 2) -idy));
@@ -244,7 +240,7 @@ for oo=1:size(coord_final,1)
         end
         
     end
-    maxEl = max(hist_bin);
+    [maxEl, maxElIndx] = max(hist_bin);
     
     for aa = 1:length(hist_bin)
         if hist_bin(aa) >= 0.8*maxEl 
@@ -258,9 +254,8 @@ for oo=1:size(coord_final,1)
                 X = aa-1:aa+1;
                 Y = hist_bin(aa-1:aa+1);
             end
-            %Interpolation
-            [p,S,mu]  = polyfit([Y(1) Y(2) Y(3)], [X(1) X(2) X(3)], 2); 
-            dir = polyval(p,Y(2),[],mu)*10;
+            P = polyfit([X(1),X(2),X(3)], 2); % Orientation
+            dir = polyval(P,)
             coord_final2 = [coord_final2; coord_final(oo,:) idx idy hist_bin(aa) dir];
         end
     end

@@ -1,7 +1,6 @@
 I = imread('dataset/roofs1.jpg');
 I_comp = imread('dataset/roofs2.jpg');
 
-
 % feature1 = load('feature1.mat');
 % features1 = feature1.feature_vec;
 % validpoints1 = load('validpoints1.mat');
@@ -15,10 +14,9 @@ I_comp = imread('dataset/roofs2.jpg');
 % validpoints2 = load('validpoints2.mat');
 % vpts2 = validpoints2.validpoints;
 
-[indexPairs,matchmetric] = matchFeatures(features1,features2,'Unique',true );%,'MaxRatio',0.4);
+[indexPairs,matchmetric] = matchFeatures(features1,features2,'Unique',true);%,'MaxRatio',0.8);
 
 matchedLoc1 = vpts1(indexPairs(:,1),:);
 matchedLoc2 = vpts2(indexPairs(:,2),:);
 
 figure;showMatchedFeatures(I,I_comp,matchedLoc1,matchedLoc2,'montage');
-legend('matched points 1','matched points 2');
