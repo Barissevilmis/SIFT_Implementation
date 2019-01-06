@@ -98,10 +98,14 @@ end
 
 %Display non-thresholded corner points
 disp(size(coord,1));
-figure(2);
+figure;
+% imagesc(img); hold on;
+% [xramp,yramp] = meshgrid(1:1:size(dog_space{coord(:,1),coord(:,2)},1),1:1:size(dog_space{coord(:,1),coord(:,2)},1));
+% quiver(xramp,yramp,coord(:,4),coord(:,4),10,'r');
+% colormap gray;
 imshow(img);
 hold on;
-plot(coord(:,4), coord(:,3) , 'b*');
+plot((2.^coord(:,2)-2).*coord(:,4), (2.^coord(:,2)-2).*coord(:,3) , 'b*');
 
 %% Remove non-maximal/minimal outliers
 coord2 = [];
@@ -150,7 +154,7 @@ end
 
 %Display first_level-thresholded corner points
 disp(size(coord2, 1));
-plot(coord2(:,4), coord2(:,3) , 'g+');
+plot((2.^coord2(:,2)-2).*coord2(:,4), (2.^coord2(:,2)-2).*coord2(:,3) , 'g+');
 
 %% Eliminate Low Contrast Extremum
 
@@ -189,7 +193,8 @@ for ll=1:size(coord3,1)
     end
 end
 disp(size(coord_final,1));
-plot(coord_final(:,4),coord_final(:,3) , 'mo');
+plot((2.^coord_final(:,2)-2).*coord_final(:,4),(2.^coord_final(:,2)-2).*coord_final(:,3) , 'mo');
+hold off;
 %% Magnitude and Theta Space
 mag_space = cell(5,4);
 theta_space = cell(5,4);
