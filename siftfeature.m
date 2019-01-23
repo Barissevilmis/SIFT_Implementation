@@ -103,9 +103,9 @@ end
 %Display non-thresholded corner points
 disp(size(coord,1));
 figure;
-imshow(img);
-hold on;
-plot((2.^coord(:,2)-2).*coord(:,4), (2.^coord(:,2)-2).*coord(:,3) , 'b*');
+% imshow(img);
+% hold on;
+% plot((2.^coord(:,2)-2).*coord(:,4), (2.^coord(:,2)-2).*coord(:,3) , 'b*');
 
 %% Remove non-maximal/minimal outliers
 coord2 = [];
@@ -173,7 +173,7 @@ end
 
 %Display first_level-thresholded corner points
 disp(size(coord2, 1));
-plot((2.^coord2(:,2)-2).*coord2(:,4),(2.^coord2(:,2)-2).*coord2(:,3),'g+');
+% plot((2.^coord2(:,2)-2).*coord2(:,4),(2.^coord2(:,2)-2).*coord2(:,3),'g+');
 
 %% Eliminate Low Contrast Extremum
 
@@ -217,8 +217,8 @@ for ll=1:size(coord3,1)
     end
 end
 disp(size(coord_final,1));
-plot((2.^coord_final(:,2)-2).*coord_final(:,4),...
-    (2.^coord_final(:,2)-2).*coord_final(:,3) , 'mo');
+% plot((2.^coord_final(:,2)-2).*coord_final(:,4),...
+%     (2.^coord_final(:,2)-2).*coord_final(:,3) , 'mo');
 hold off;
 %% Magnitude and Theta Space
 mag_space = cell(5,4);
@@ -309,6 +309,11 @@ for oo=1:size(coord_final,1)
     end
 end
 disp(size(coord_final2,1));
+imagesc(img); hold on;
+[u,v] = pol2cart(theta,coord_final2(:,13), coord_final2(:,12));
+disp(size(u));
+quiver((2.^coord_final2(:,2)-2).*coord_final2(:,4),...
+    (2.^coord_final2(:,2)-2).*coord_final2(:,3),u,v);
 
 %% Local Image Descriptors
 w=4;% In David G. Lowe experiment,divide the area into 4*4.
@@ -325,48 +330,48 @@ for oo = 1:size(coord_final2,1)
      
     % Lowe descriptor
     %New approach
-    coor = [subpixel_idx+offset; subpixel_idy+offset];
-    size_mag = [size(mag_I,1)/2; size(mag_I,2)/2];
-    
-    theta = 360 - theta;
-    rotMag = imrotate(mag_I, theta);
-    rotTheta = imrotate(theta_I, theta);
-    
-    rotMat = [cosd(theta) -sind(theta); sind(theta) cosd(theta)];
-    temp_coor = rotMat*(coor - size_mag);
-    rot_coor = temp_coor + size_mag;
-    
-    difMat = [(size(rotMag,1) - size(mag_I,1))/2;...
-        (size(rotMag,2) - size(mag_I,2))/2];
-    rot_coor_final = rot_coor + difMat;
-    rot_row = round(rot_coor_final(1));
-    rot_col = round(rot_coor_final(2));
-    
-    temp_vec = zeros(4,4,8);
-    %Create window
-    for i = 1:1:16
-        for j = 1:1:16      
-            rowTrue = round(rot_row + j - 9);
-            colTrue = round(rot_col + i - 9);
-            
-            %Check if points between boundaries
-            if rowTrue > 0 && colTrue > 0 &&...
-                    rowTrue <= size(rotMag, 1) && colTrue <= size(rotMag,2)
-                mag = rotMag(rowTrue, colTrue)* G1(j,i);
-                ori = mod(rotTheta(rowTrue, colTrue) + 360, 360);
-                temp_vec(ceil(i/4),ceil(j/4),floor(ori/45)+1) =...
-                    temp_vec(ceil(i/4),ceil(j/4),floor(ori/45)+1) + mag;
-            end
-        end
-    end
-    
-    count = 1;
-    for i = 1:1:4
-        for j = 1:1:4
-            feature_vec(oo,count:count+7) = temp_vec(i,j,:);
-            count = count + 8;
-        end
-    end
+%     coor = [subpixel_idx+offset; subpixel_idy+offset];
+%     size_mag = [size(mag_I,1)/2; size(mag_I,2)/2];
+%     
+%     theta = 360 - theta;
+%     rotMag = imrotate(mag_I, theta);
+%     rotTheta = imrotate(theta_I, theta);
+%     
+%     rotMat = [cosd(theta) -sind(theta); sind(theta) cosd(theta)];
+%     temp_coor = rotMat*(coor - size_mag);
+%     rot_coor = temp_coor + size_mag;
+%     
+%     difMat = [(size(rotMag,1) - size(mag_I,1))/2;...
+%         (size(rotMag,2) - size(mag_I,2))/2];
+%     rot_coor_final = rot_coor + difMat;
+%     rot_row = round(rot_coor_final(1));
+%     rot_col = round(rot_coor_final(2));
+%     
+%     temp_vec = zeros(4,4,8);
+%     %Create window
+%     for i = 1:1:16
+%         for j = 1:1:16      
+%             rowTrue = round(rot_row + j - 9);
+%             colTrue = round(rot_col + i - 9);
+%             
+%             %Check if points between boundaries
+%             if rowTrue > 0 && colTrue > 0 &&...
+%                     rowTrue <= size(rotMag, 1) && colTrue <= size(rotMag,2)
+%                 mag = rotMag(rowTrue, colTrue)* G1(j,i);
+%                 ori = mod(rotTheta(rowTrue, colTrue) + 360, 360);
+%                 temp_vec(ceil(i/4),ceil(j/4),floor(ori/45)+1) =...
+%                     temp_vec(ceil(i/4),ceil(j/4),floor(ori/45)+1) + mag;
+%             end
+%         end
+%     end
+%     
+%     count = 1;
+%     for i = 1:1:4
+%         for j = 1:1:4
+%             feature_vec(oo,count:count+7) = temp_vec(i,j,:);
+%             count = count + 8;
+%         end
+%     end
     
 %AI Shack
     %Current approach
